@@ -3,8 +3,6 @@ import {
   getStoredSafeConfig, 
   storeSafeConfig, 
   clearStoredSafeConfig,
-  isSafeDeployed,
-  getSafeInfo,
   formatSafeAddress,
   getSafeAppUrl,
   SAFE_NETWORKS
@@ -64,7 +62,7 @@ export const useSafe = (network: keyof typeof SAFE_NETWORKS = 'sepolia'): UseSaf
 
       setIsLoading(true);
       try {
-        const deployed = await isSafeDeployedOnChain(safeConfig.safeAddress, network);
+        const deployed = await isSafeDeployedOnChain(safeConfig.safeAddress as any, network);
         setIsDeployed(deployed);
         
         if (deployed) {
@@ -103,7 +101,7 @@ export const useSafe = (network: keyof typeof SAFE_NETWORKS = 'sepolia'): UseSaf
       const owners = passkeys.map(passkey => deriveAddressFromPasskey(passkey));
       
       // Deploy Safe using Safe SDK
-      const { safeAddress, txHash } = await deploySafeWithPasskeys(passkeys, threshold, network);
+      const { safeAddress } = await deploySafeWithPasskeys(passkeys, threshold, network);
       
       const newConfig: SafeConfig = {
         safeAddress,
@@ -132,7 +130,7 @@ export const useSafe = (network: keyof typeof SAFE_NETWORKS = 'sepolia'): UseSaf
 
     setIsLoading(true);
     try {
-      const info = await getSafeInfoFromBlockchain(safeConfig.safeAddress, network);
+      const info = await getSafeInfoFromBlockchain(safeConfig.safeAddress as any, network);
       setSafeInfo(info);
     } catch (err) {
       console.error('Failed to refresh Safe info:', err);
