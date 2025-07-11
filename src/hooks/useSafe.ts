@@ -9,7 +9,14 @@ import {
   getSafeAppUrl,
   SAFE_NETWORKS
 } from '../utils/safe';
+import { 
+  deploySafeWithPasskeys,
+  isSafeDeployedOnChain,
+  getSafeInfoFromBlockchain,
+  deriveAddressFromPasskey
+} from '../utils/safeSDK';
 import { type SafeConfig, type SafeInfo } from '../types/safe';
+import { type StoredPasskey } from '../types/passkey';
 
 interface UseSafeReturn {
   safeConfig: SafeConfig | null;
@@ -18,7 +25,7 @@ interface UseSafeReturn {
   isLoading: boolean;
   error: string | null;
   setSafeAddress: (address: string) => void;
-  deploySafe: (owners: string[], threshold: number) => Promise<boolean>;
+  deploySafe: (passkeys: StoredPasskey[], threshold: number) => Promise<boolean>;
   refreshSafeInfo: () => Promise<void>;
   clearSafeConfig: () => void;
   clearError: () => void;
@@ -57,7 +64,7 @@ export const useSafe = (network: keyof typeof SAFE_NETWORKS = 'sepolia'): UseSaf
 
       setIsLoading(true);
       try {
-        const deployed = await isSafeDeployed(safeConfig.safeAddress, network);
+        const deployed = await isSafeDeployedOnChain(safeConfig.safeAddress, network);
         setIsDeployed(deployed);
         
         if (deployed) {
@@ -86,25 +93,20 @@ export const useSafe = (network: keyof typeof SAFE_NETWORKS = 'sepolia'): UseSaf
     storeSafeConfig(newConfig);
   }, [safeConfig, network]);
 
-  // Deploy Safe (placeholder - would need actual Safe SDK integration)
-  const deploySafe = useCallback(async (owners: string[], threshold: number): Promise<boolean> => {
+  // Deploy Safe using real Safe SDK integration
+  const deploySafe = useCallback(async (passkeys: StoredPasskey[], threshold: number): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
     try {
-      // This is a placeholder - in a real implementation, you would:
-      // 1. Use Safe SDK to create and deploy the Safe
-      // 2. Wait for deployment transaction
-      // 3. Get the deployed Safe address
+      // Convert passkeys to owner addresses
+      const owners = passkeys.map(passkey => deriveAddressFromPasskey(passkey));
       
-      // For now, we'll simulate a deployment
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Generate a mock Safe address (in real implementation, this would come from deployment)
-      const mockSafeAddress = `0x${Math.random().toString(16).slice(2, 42).padStart(40, '0')}`;
+      // Deploy Safe using Safe SDK
+      const { safeAddress, txHash } = await deploySafeWithPasskeys(passkeys, threshold, network);
       
       const newConfig: SafeConfig = {
-        safeAddress: mockSafeAddress,
+        safeAddress,
         owners,
         threshold,
         network,
@@ -130,7 +132,7 @@ export const useSafe = (network: keyof typeof SAFE_NETWORKS = 'sepolia'): UseSaf
 
     setIsLoading(true);
     try {
-      const info = await getSafeInfo(safeConfig.safeAddress, network);
+      const info = await getSafeInfoFromBlockchain(safeConfig.safeAddress, network);
       setSafeInfo(info);
     } catch (err) {
       console.error('Failed to refresh Safe info:', err);

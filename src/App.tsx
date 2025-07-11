@@ -7,6 +7,7 @@ function App() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [showPasskeyForm, setShowPasskeyForm] = useState(false);
+  const [showPasskeySelector, setShowPasskeySelector] = useState(false);
   const [message, setMessage] = useState('');
 
   const {
@@ -58,17 +59,26 @@ function App() {
     }
   };
 
+  const handleAuthenticateWithSelection = () => {
+    if (passkeys.length === 1) {
+      handleAuthenticatePasskey(passkeys[0].rawId);
+    } else if (passkeys.length > 1) {
+      setShowPasskeySelector(true);
+    } else {
+      setMessage('No passkeys available');
+    }
+  };
+
   const handleCreateSafe = async () => {
     if (passkeys.length === 0) {
       setMessage('Please create a passkey first');
       return;
     }
 
-    // For demo purposes, we'll use the first passkey as the owner
-    const owners = [passkeys[0].publicKey]; // In reality, this would be the address derived from the passkey
+    // Use all passkeys as owners
     const threshold = 1;
 
-    const success = await deploySafe(owners, threshold);
+    const success = await deploySafe(passkeys, threshold);
     if (success) {
       setMessage('Safe created successfully!');
     }
@@ -80,7 +90,7 @@ function App() {
       return;
     }
 
-    const assertion = await authenticatePasskey(passkeys[0].id);
+    const assertion = await authenticatePasskey(passkeys[0].rawId);
     if (assertion) {
       setMessage('Message signed successfully!');
     }
@@ -193,7 +203,7 @@ function App() {
                     <div className="flex space-x-2 sm:ml-4 flex-shrink-0">
                       <Button
                         size="sm"
-                        onClick={() => handleAuthenticatePasskey(passkey.id)}
+                        onClick={() => handleAuthenticatePasskey(passkey.rawId)}
                         disabled={isLoading}
                         className="flex-1 sm:flex-none"
                       >
@@ -211,13 +221,21 @@ function App() {
                     </div>
                   </div>
                 ))}
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowPasskeyForm(true)}
-                  disabled={isLoading}
-                >
-                  Add New Passkey
-                </Button>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowPasskeyForm(true)}
+                    disabled={isLoading}
+                  >
+                    Add New Passkey
+                  </Button>
+                  <Button
+                    onClick={handleAuthenticateWithSelection}
+                    disabled={isLoading}
+                  >
+                    Authenticate
+                  </Button>
+                </div>
               </div>
             )}
 
@@ -369,6 +387,40 @@ function App() {
             )}
           </Card>
         </div>
+
+        {/* Passkey Selection Modal */}
+        {showPasskeySelector && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Passkey</h3>
+              <div className="space-y-2">
+                {passkeys.map((passkey) => (
+                  <button
+                    key={passkey.id}
+                    onClick={() => {
+                      handleAuthenticatePasskey(passkey.rawId);
+                      setShowPasskeySelector(false);
+                    }}
+                    className="w-full text-left p-3 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <div className="font-medium text-gray-900">{passkey.name}</div>
+                    <div className="text-sm text-gray-500">
+                      Created: {new Date(passkey.createdAt).toLocaleDateString()}
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPasskeySelector(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Loading Overlay */}
         {isLoading && (
