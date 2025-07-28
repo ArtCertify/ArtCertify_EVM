@@ -1,234 +1,228 @@
-# ArtCertify - Safe Passkey Demo
+# 🎨 ArtCertify Safe Wallet
 
-Un'applicazione React moderna che integra la funzionalità passkey con Safe Wallet, utilizzando un design atomico con Tailwind CSS.
+A modern Web3 wallet built with **Safe Protocol Kit** and **Passkeys** for secure, gasless NFT minting and transactions.
 
-## 🚀 Funzionalità
+## 🚀 Features
 
-- **Gestione Passkey**: Crea, autentica e gestisci passkey utilizzando l'API WebAuthn
-- **Integrazione Safe**: Crea e gestisci wallet Safe utilizzando passkey come metodo di autenticazione
-- **Design Atomico**: Componenti modulari e riutilizzabili
-- **UI Moderna**: Interfaccia utente pulita e responsive con Tailwind CSS
-- **TypeScript**: Tipizzazione completa per una migliore esperienza di sviluppo
+- **🔐 Passkey Authentication**: Secure wallet access using biometric authentication
+- **🛡️ Safe Smart Wallet**: Built on Safe Protocol Kit for enhanced security
+- **💸 Gasless Transactions**: Powered by Gelato for seamless user experience
+- **🎯 Batch Operations**: Deploy Safe and add passkey owner in single transaction
+- **📱 Cross-Platform**: Support for Web, iOS, and Android passkeys
+- **🎨 Modern UI**: Clean, responsive interface with Tailwind CSS
 
-## 📋 Prerequisiti
+## 🏗️ Architecture
 
-- Node.js (versione 18 o superiore)
-- Un browser moderno che supporta WebAuthn (Chrome, Firefox, Safari, Edge)
-- Dispositivo con autenticazione biometrica (Touch ID, Face ID, Windows Hello)
+The project follows a domain-driven architecture inspired by Zeal-Wallet:
 
-## 🛠️ Installazione
+```
+src/
+├── domains/
+│   ├── Account/          # Account management
+│   ├── Passkey/          # Passkey creation & authentication
+│   ├── Safe/             # Safe wallet integration
+│   ├── Storage/          # Local data persistence
+│   └── Main/             # Main application components
+├── lib/
+│   └── toolkit/          # Utility functions & types
+└── components/
+    └── ui/               # Reusable UI components
+```
 
-1. Clona il repository:
+## 📋 Prerequisites
+
+- Node.js 18+ 
+- Yarn or npm
+- Modern browser with Passkey support
+
+## 🔧 Installation
+
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd ArtCertify_EVM
 ```
 
-2. Installa le dipendenze:
+2. Install dependencies:
 ```bash
-npm install
+yarn install
 ```
 
-3. Avvia il server di sviluppo:
+3. Set up environment variables:
 ```bash
-npm run dev
+# Create .env file with:
+VITE_GELATO_RELAY_API_KEY=your-gelato-relay-api-key-here
+VITE_CHAIN_ID=11155111
+VITE_RPC_URL=https://rpc.sepolia.org
+VITE_DEMO_NFT_CONTRACT=0x1234567890123456789012345678901234567890
+VITE_SAFE_VERSION=1.4.1
+VITE_APP_NAME=ArtCertify
+VITE_APP_DOMAIN=artcertify.com
 ```
 
-4. Apri il browser e vai a `http://localhost:5173`
-
-## 🏗️ Architettura
-
-### Struttura del Progetto
-
-```
-src/
-├── components/
-│   ├── atoms/           # Componenti atomici base
-│   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   ├── Input.tsx
-│   │   ├── Spinner.tsx
-│   │   ├── Alert.tsx
-│   │   └── index.ts
-│   ├── molecules/       # Componenti molecolari
-│   └── organisms/       # Componenti organici
-├── hooks/
-│   ├── usePasskey.ts    # Hook per gestione passkey
-│   └── useSafe.ts       # Hook per gestione Safe
-├── types/
-│   ├── passkey.ts       # Tipi TypeScript per passkey
-│   └── safe.ts          # Tipi TypeScript per Safe
-├── utils/
-│   ├── passkey.ts       # Utility per passkey
-│   └── safe.ts          # Utility per Safe
-└── App.tsx              # Componente principale
+4. Start the development server:
+```bash
+yarn dev
 ```
 
-### Componenti Atomici
+## 🌐 Environment Variables
 
-- **Button**: Bottone riutilizzabile con varianti e stati
-- **Card**: Contenitore per raggruppare contenuti
-- **Input**: Campo di input con validazione
-- **Spinner**: Indicatore di caricamento
-- **Alert**: Componente per messaggi di feedback
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_GELATO_RELAY_API_KEY` | Gelato Relay API key for gasless transactions | `your-api-key` |
+| `VITE_CHAIN_ID` | Ethereum chain ID (11155111 for Sepolia) | `11155111` |
+| `VITE_RPC_URL` | RPC endpoint URL | `https://rpc.sepolia.org` |
+| `VITE_DEMO_NFT_CONTRACT` | NFT contract address for testing | `0x123...` |
+| `VITE_SAFE_VERSION` | Safe contracts version | `1.4.1` |
+| `VITE_APP_DOMAIN` | App domain for passkey RP ID | `artcertify.com` |
 
-### Hooks Personalizzati
+## 🚀 Usage
 
-- **usePasskey**: Gestisce la creazione, autenticazione e rimozione di passkey
-- **useSafe**: Gestisce la configurazione e le operazioni del wallet Safe
+### 1. Wallet Creation
 
-## 🔐 Funzionalità Passkey
+The app guides users through a seamless onboarding process:
 
-L'applicazione utilizza l'API WebAuthn per:
+1. **Enter Username**: Choose a display name for your wallet
+2. **Create Passkey**: Use biometric authentication to secure your wallet
+3. **Deploy Safe**: Automatically deploy a Safe smart wallet
+4. **Ready to Use**: Start making gasless transactions
 
-1. **Creazione Passkey**: Crea nuove passkey utilizzando l'autenticazione biometrica
-2. **Autenticazione**: Autentica l'utente con passkey esistenti
-3. **Gestione**: Visualizza, rimuove e gestisce passkey salvate localmente
+### 2. Gasless Transactions
 
-### Supporto Browser
+All transactions are sponsored by Gelato, providing a seamless user experience:
 
-- ✅ Chrome 67+
-- ✅ Firefox 60+
-- ✅ Safari 14+
-- ✅ Edge 79+
+- **NFT Minting**: Mint NFTs without gas fees
+- **Token Transfers**: Send tokens gaslessly
+- **Smart Contract Interactions**: Execute any transaction without ETH
 
-## 🔒 Integrazione Safe
+### 3. Batch Operations
 
-L'app integra la funzionalità Safe per:
+The wallet supports batch operations for efficiency:
 
-1. **Creazione Wallet**: Crea un nuovo wallet Safe utilizzando passkey come owner
-2. **Gestione**: Visualizza informazioni del wallet Safe
-3. **Transazioni**: Firma messaggi e transazioni utilizzando passkey
+- **Safe Deployment + Passkey Setup**: Single transaction for wallet creation
+- **Multiple Transactions**: Execute multiple operations in one go
+- **Optimal Gas Usage**: Minimize transaction costs
 
-### Reti Supportate
+## 📱 Passkey Support
 
-- **Sepolia Testnet** (predefinita)
-- **Ethereum Mainnet**
+The wallet supports passkeys across multiple platforms:
 
-## 🎨 Design System
+- **Web**: WebAuthn with hardware security keys
+- **iOS**: Face ID, Touch ID
+- **Android**: Biometric authentication
+- **Desktop**: Windows Hello, macOS Touch ID
 
-L'applicazione utilizza un design system basato su:
+## 🛡️ Security Features
 
-- **Atomic Design**: Metodologia di progettazione modulare
-- **Tailwind CSS**: Framework CSS utility-first
-- **Responsive Design**: Compatibile con tutti i dispositivi
-- **Accessibilità**: Conforme alle linee guida WCAG
+- **No Private Keys**: Uses passkeys instead of traditional seed phrases
+- **Hardware Security**: Leverages device secure enclaves
+- **Safe Protocol**: Built on battle-tested Safe smart contracts
+- **Biometric Auth**: Secure authentication without passwords
 
-### Palette Colori
+## 🏗️ Key Components
 
-```css
-Primary: #3b82f6 (Blue)
-Secondary: #64748b (Slate)
-Success: #10b981 (Green)
-Warning: #f59e0b (Amber)
-Error: #ef4444 (Red)
+### PasskeyModule
+Handles passkey creation, authentication, and signing across platforms.
+
+### SafeModule
+Manages Safe wallet deployment, configuration, and transactions.
+
+### GelatoModule  
+Provides gasless transaction execution and batch operations.
+
+### StorageModule
+Manages local data persistence for accounts and settings.
+
+## 📚 API Reference
+
+### Creating a Wallet
+```typescript
+import { SafeModule } from './domains/Safe/safe';
+
+const result = await SafeModule.createSafeWithPasskeyBatch(
+  'username',
+  'saltNonce'
+);
 ```
 
-## 📱 Utilizzo
+### Executing Gasless Transactions
+```typescript
+import { SafeModule } from './domains/Safe/safe';
 
-### 1. Creazione Passkey
-
-1. Clicca su "Create First Passkey"
-2. Inserisci username e display name
-3. Clicca "Create Passkey"
-4. Completa l'autenticazione biometrica
-
-### 2. Creazione Safe Wallet
-
-1. Assicurati di aver creato almeno una passkey
-2. Clicca su "Create Safe Wallet"
-3. Attendi il completamento del deployment
-4. Visualizza le informazioni del wallet
-
-### 3. Autenticazione
-
-1. Seleziona una passkey esistente
-2. Clicca "Authenticate"
-3. Completa l'autenticazione biometrica
-4. Ricevi conferma dell'autenticazione
-
-## 🔧 Configurazione
-
-### Variabili di Ambiente
-
-Crea un file `.env` nella root del progetto:
-
-```env
-VITE_INFURA_PROJECT_ID=your_infura_project_id
-VITE_SAFE_SERVICE_URL=https://safe-transaction-sepolia.safe.global
-VITE_NETWORK=sepolia
+const result = await SafeModule.executeGaslessTransaction(
+  safeAddress,
+  transactions,
+  credentialId
+);
 ```
 
-### Personalizzazione
+### Minting NFTs
+```typescript
+import { SafeModule } from './domains/Safe/safe';
 
-Per personalizzare l'applicazione:
-
-1. **Colori**: Modifica `tailwind.config.js`
-2. **Componenti**: Aggiungi nuovi componenti in `src/components/`
-3. **Reti**: Modifica `src/utils/safe.ts`
-4. **Storage**: Personalizza le chiavi di localStorage
+const result = await SafeModule.mintNFTGasless(
+  safeAddress,
+  nftContractAddress,
+  tokenId,
+  credentialId
+);
+```
 
 ## 🧪 Testing
 
-Per testare l'applicazione:
-
-1. **Manuale**: Utilizza l'interfaccia web
-2. **Browser**: Testa su diversi browser
-3. **Dispositivi**: Verifica il responsive design
-
-### Requisiti per il Testing
-
-- Dispositivo con autenticazione biometrica
-- Browser con supporto WebAuthn
-- Connessione HTTPS (o localhost)
-
-## 📚 Risorse
-
-- [Safe Documentation](https://docs.safe.global/)
-- [WebAuthn API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Authentication_API)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [React Documentation](https://react.dev/)
-
-## 🐛 Troubleshooting
-
-### Problemi Comuni
-
-1. **WebAuthn non supportato**: Aggiorna il browser
-2. **Passkey non funziona**: Verifica l'autenticazione biometrica
-3. **Safe non si deploya**: Controlla la connessione di rete
-4. **Errori di CORS**: Utilizza HTTPS o localhost
-
-### Debug
-
-Per abilitare il debug:
-
-```javascript
-// Nella console del browser
-localStorage.setItem('debug', 'true');
+Run tests with:
+```bash
+yarn test
 ```
 
-## 🤝 Contribuire
+Run tests with UI:
+```bash
+yarn test:ui
+```
 
-1. Fork il repository
-2. Crea un branch per la tua feature
-3. Commit le modifiche
-4. Push al branch
-5. Crea una Pull Request
+## 🔨 Development
 
-## 📄 Licenza
+### Adding New Features
 
-Questo progetto è rilasciato sotto licenza MIT.
+1. Create domain-specific modules in `src/domains/`
+2. Add reusable components in `src/components/ui/`
+3. Update types in respective domain folders
+4. Add tests for new functionality
 
-## 👥 Autori
+### Building for Production
 
-- **Andrea Ritondale** - Sviluppatore principale
+```bash
+yarn build
+```
 
-## 🙏 Ringraziamenti
+## 📦 Deployment
 
-- [Safe Global](https://safe.global/) per l'ecosistema Safe
-- [WebAuthn Community](https://webauthn.io/) per le risorse
-- [Tailwind CSS](https://tailwindcss.com/) per il framework CSS
+The app can be deployed to any static hosting service:
+
+- **Netlify**: Connect repository for automatic deploys
+- **Vercel**: Deploy with zero configuration
+- **IPFS**: Decentralized hosting option
+- **GitHub Pages**: Free hosting for public repositories
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+- **Safe Protocol**: For secure smart wallet infrastructure
+- **Gelato Network**: For gasless transaction relay
+- **Zeal-Wallet**: For architectural inspiration
+- **WebAuthn**: For passwordless authentication standards
 
 ---
 
-**Nota**: Questa è una demo e non dovrebbe essere utilizzata in produzione senza ulteriori test e validazioni di sicurezza.
+Built with ❤️ for the Web3 community 
