@@ -1,0 +1,31 @@
+/* App-specific styles */
+.App {
+  /* Any global app styles would go here */
+  /* Most styling is handled by TailwindCSS */
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Custom focus styles for better accessibility */
+.focus-ring {
+  @apply focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-slate-900 focus:outline-none;
+}
+
+/* Gradient text utility */
+.gradient-text {
+  @apply bg-gradient-to-r from-primary-400 to-blue-400 bg-clip-text text-transparent;
+} 
