@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useProjectsCache } from '../hooks/useProjectsCache';
 import { WalletSignatureModal } from './modals/WalletSignatureModal';
 import OrganizationOnboarding from './OrganizationOnboarding';
-import { isOrgNftName } from '../utils/orgNftName';
+import { useOrganization } from '../contexts/OrganizationContext';
 import type { AssetInfo } from '../types/asset';
 
 // Project Card Component
@@ -77,6 +77,7 @@ interface CertificationsPageState {
 
 export const DashboardPage: React.FC = () => {
   const { userAddress, isAuthenticated, hasValidToken } = useAuth();
+  const { organizationData } = useOrganization();
   const { getCachedProjects, setCachedProjects, clearProjectsCache } = useProjectsCache();
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const [state, setState] = useState<CertificationsPageState>({
@@ -232,6 +233,16 @@ export const DashboardPage: React.FC = () => {
     return 'Senza Progetto';
   };
 
+  // Certificati "classici" (escludiamo l'NFT organizzazione dalla lista)
+  const classicCertificates = React.useMemo(() => {
+    if (!organizationData?.assetId != null && organizationData?.assetId !== undefined)
+      return state.certificates;
+    const orgId = organizationData!.assetId;
+    return state.certificates.filter(
+      cert => Number(cert.tokenId) !== Number(orgId) && cert.index !== orgId
+    );
+  }, [state.certificates, organizationData?.assetId]);
+
   // Get unique projects from certificates (excluding "Senza Progetto")
   // Uses cache when available, otherwise extracts from current certificates
   const getUniqueProjects = (): string[] => {
@@ -242,9 +253,9 @@ export const DashboardPage: React.FC = () => {
       }
     }
     
-    // Fallback to extracting from current certificates
+    // Fallback to extracting from current certificates (solo certificati classici)
     const projects = new Set<string>();
-    state.certificates.forEach(cert => {
+    classicCertificates.forEach(cert => {
       const projectName = extractProjectName(cert.params.name || '');
       // Only include projects that are not "Senza Progetto"
       if (projectName !== 'Senza Progetto') {
@@ -254,11 +265,11 @@ export const DashboardPage: React.FC = () => {
     return Array.from(projects).sort();
   };
 
-  // Group certificates by project
+  // Group certificates by project (solo certificati classici)
   const getProjectsData = () => {
     const projectsMap = new Map<string, AssetInfo[]>();
     
-    state.certificates.forEach(cert => {
+    classicCertificates.forEach(cert => {
       const projectName = extractProjectName(cert.params.name || '');
       if (projectName !== 'Senza Progetto') {
         if (!projectsMap.has(projectName)) {
