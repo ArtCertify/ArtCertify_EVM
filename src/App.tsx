@@ -103,8 +103,8 @@ function App() {
       config={{
         defaultChain: base,
         supportedChains: [base],
-        // Metodi di login (devono essere abilitati in dashboard.privy.io → Login methods)
-        loginMethods: ['passkey', 'email', 'wallet', 'google', 'apple'],
+        // Metodi di login (devono essere abilitati in dashboard.privy.io → Login methods). Passkey per primo.
+        loginMethods: ['passkey', 'email', 'wallet'],
         // Crea un embedded wallet al login se l'utente non ne ha uno (es. ha fatto login solo con passkey)
         // 'all-users' = sempre al login | 'users-without-wallets' = solo se non ha wallet | 'off' = mai
         embeddedWallets: {
@@ -115,10 +115,11 @@ function App() {
         appearance: {
           theme: 'dark',
           accentColor: '#2563eb',
-          // logo: '/logo.png',                    // Logo nel modale Privy
-          // landingHeader: 'ArtCertify',          // Intestazione sopra il modale
-          loginMessage: 'Accedi per certificare su Base', // Testo sotto il logo (max 100 caratteri)
-          // walletList: ['metamask', 'coinbase_wallet', 'rainbow', 'detected_wallets'], // Ordine wallet nel modale
+          // Titolo e messaggio nel modale (passkey in evidenza)
+          landingHeader: 'Accedi',
+          loginMessage: 'Usa passkey (consigliato), email o wallet per accedere su Base',
+          // Mostra prima email/passkey invece del wallet, così passkey è più visibile
+          showWalletLoginFirst: false,
         },
       }}
     >
