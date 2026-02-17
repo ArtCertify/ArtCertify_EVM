@@ -98,7 +98,7 @@ const ModifyAttachmentsModal: React.FC<ModifyAttachmentsModalProps> = ({
   const [formData, setFormData] = useState({
     // Campi non modificabili (da IPFS)
     projectName: ipfsMetadata?.properties?.form_data?.projectName || '',
-    assetName: ipfsMetadata?.properties?.form_data?.assetName || asset.nftMetadata?.name || asset.params.name || '',
+    assetName: ipfsMetadata?.properties?.form_data?.assetName || asset.nftMetadata?.name || asset.params?.name || '',
     
     // Campi modificabili
     description: ipfsMetadata?.properties?.form_data?.description || asset.nftMetadata?.description || asset.description || '',
@@ -120,7 +120,7 @@ const ModifyAttachmentsModal: React.FC<ModifyAttachmentsModalProps> = ({
       setLoadingCurrentJson(true);
       try {
         // Convert reserve address to CID and fetch JSON
-        const result = IPFSUrlService.getReserveAddressUrl(asset.params.reserve);
+        const result = IPFSUrlService.getReserveAddressUrl(asset.params?.reserve);
         if (!result.success || !result.gatewayUrl) {
           throw new Error('Errore nella conversione del reserve address');
         }
@@ -413,11 +413,11 @@ const ModifyAttachmentsModal: React.FC<ModifyAttachmentsModalProps> = ({
             customType: formData.customType,
             // Add versioning info
           version: versionInfo.nextVersion,
-            previous_version_cid: asset.params.reserve ? 
-              IPFSUrlService.getReserveAddressUrl(asset.params.reserve).cid : 
+            previous_version_cid: asset.params?.reserve ? 
+              IPFSUrlService.getReserveAddressUrl(asset.params?.reserve).cid : 
               null,
-            previous_version_url: asset.params.reserve ? 
-              IPFSUrlService.getReserveAddressUrl(asset.params.reserve).gatewayUrl : 
+            previous_version_url: asset.params?.reserve ? 
+              IPFSUrlService.getReserveAddressUrl(asset.params?.reserve).gatewayUrl : 
               null,
             // Update image info only if new file is uploaded
             ...(formData.imageFile && {
@@ -441,13 +441,13 @@ const ModifyAttachmentsModal: React.FC<ModifyAttachmentsModalProps> = ({
         tokenId: asset.tokenId,
         assetId: asset.index ?? asset.tokenId,
           existingAssetId: asset.index ?? asset.tokenId,
-          existingReserveAddress: asset.params.reserve,
+          existingReserveAddress: asset.params?.reserve,
           newCertificationData: updatedJson, // Use updated JSON as certification data
         newFiles: filesToUpload,
         formData: {
             projectName: formData.projectName,
             assetName: formData.assetName,
-            unitName: currentCertJson.properties?.form_data?.unitName || asset.params.unitName || '',
+            unitName: currentCertJson.properties?.form_data?.unitName || asset.params?.unitName || '',
             fullAssetName: currentCertJson.properties?.form_data?.fullAssetName || `${formData.projectName} / ${formData.assetName}`,
           description: formData.description,
             fileOrigin: formData.fileOrigin,
@@ -490,7 +490,7 @@ const ModifyAttachmentsModal: React.FC<ModifyAttachmentsModalProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-slate-700">
             <Dialog.Title className="text-lg font-medium text-white">
-              Modifica Certificazione - {asset.params.name || `Asset ${asset.index}`}
+              Modifica Certificazione - {asset.params?.name || `Asset ${asset.index}`}
             </Dialog.Title>
             <button
               onClick={handleClose}
@@ -528,9 +528,9 @@ const ModifyAttachmentsModal: React.FC<ModifyAttachmentsModalProps> = ({
                   <span className="text-slate-400">Creatore:</span>
                   <span 
                     className="ml-2 text-white font-mono text-xs" 
-                    title={asset.params.creator}
+                    title={asset.params?.creator ?? ''}
                   >
-                    {truncateAddress(asset.params.creator)}
+                    {truncateAddress(asset.params?.creator ?? '')}
                   </span>
                 </div>
                 {ipfsMetadata?.properties?.form_data?.projectName && (

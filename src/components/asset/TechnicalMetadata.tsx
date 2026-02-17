@@ -14,29 +14,29 @@ const TechnicalMetadata: React.FC<TechnicalMetadataProps> = ({ asset }) => {
   };
 
   // Decodifica ARC-0019 del Reserve Address
-  const reserveCidInfo = asset.params.reserve 
+  const reserveCidInfo = asset.params?.reserve 
     ? CidDecoder.decodeReserveAddressToCid(asset.params.reserve)
     : null;
 
   const technicalData = [
     {
       label: 'Asset ID',
-      value: asset.index.toString(),
+      value: (asset.index ?? asset.tokenId).toString(),
       type: 'text'
     },
     {
       label: 'Total Supply',
-      value: formatNumber(asset.params.total),
+      value: formatNumber(asset.params?.total ?? 0),
       type: 'number'
     },
     {
       label: 'Decimals',
-      value: asset.params.decimals.toString(),
+      value: (asset.params?.decimals ?? 0).toString(),
       type: 'number'
     },
     {
       label: 'Default Frozen',
-      value: asset.params.defaultFrozen,
+      value: asset.params?.defaultFrozen,
       type: 'boolean' as const
     },
     {
@@ -49,27 +49,27 @@ const TechnicalMetadata: React.FC<TechnicalMetadataProps> = ({ asset }) => {
   const addresses = [
     {
       label: 'Creator',
-      value: asset.params.creator,
+      value: asset.params?.creator,
       required: true
     },
     {
       label: 'Manager',
-      value: asset.params.manager,
+      value: asset.params?.manager,
       required: false
     },
     {
       label: 'Reserve',
-      value: asset.params.reserve,
+      value: asset.params?.reserve,
       required: false
     },
     {
       label: 'Freeze',
-      value: asset.params.freeze,
+      value: asset.params?.freeze,
       required: false
     },
     {
       label: 'Clawback',
-      value: asset.params.clawback,
+      value: asset.params?.clawback,
       required: false
     }
   ].filter(addr => addr.required || addr.value);
@@ -174,11 +174,11 @@ const TechnicalMetadata: React.FC<TechnicalMetadataProps> = ({ asset }) => {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-gray-500">Frozen by Default</span>
-            <Badge variant={asset.params.defaultFrozen ? 'warning' : 'success'}>
-              {asset.params.defaultFrozen ? 'Frozen' : 'Unfrozen'}
+            <Badge variant={asset.params?.defaultFrozen ? 'warning' : 'success'}>
+              {asset.params?.defaultFrozen ? 'Frozen' : 'Unfrozen'}
             </Badge>
           </div>
-          {asset.params.manager && (
+          {asset.params?.manager && (
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500">Manageable</span>
               <Badge variant="info">Yes</Badge>

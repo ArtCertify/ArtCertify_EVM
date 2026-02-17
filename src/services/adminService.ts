@@ -10,6 +10,7 @@ export interface Organization {
   website?: string;
   contactEmail?: string;
   enabled?: boolean;
+  updatedAt?: string;
 }
 
 export interface CreateOrganizationRequest {

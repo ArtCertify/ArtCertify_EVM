@@ -17,36 +17,37 @@ const AssetInfoCard: React.FC<AssetInfoCardProps> = ({ asset }) => {
     return `${address.slice(0, 8)}...${address.slice(-8)}`;
   };
 
+  const p = asset.params ?? {};
   const infoItems = [
     {
       label: 'Creator',
-      value: asset.params.creator,
+      value: p.creator ?? 'N/A',
       copyable: true,
-      formatted: formatAddress(asset.params.creator)
+      formatted: formatAddress(p.creator ?? '')
     },
     {
       label: 'Manager',
-      value: asset.params.manager || 'N/A',
-      copyable: !!asset.params.manager,
-      formatted: asset.params.manager ? formatAddress(asset.params.manager) : 'N/A'
+      value: p.manager || 'N/A',
+      copyable: !!p.manager,
+      formatted: p.manager ? formatAddress(p.manager) : 'N/A'
     },
     {
       label: 'Reserve',
-      value: asset.params.reserve || 'N/A',
-      copyable: !!asset.params.reserve,
-      formatted: asset.params.reserve ? formatAddress(asset.params.reserve) : 'N/A'
+      value: p.reserve || 'N/A',
+      copyable: !!p.reserve,
+      formatted: p.reserve ? formatAddress(p.reserve) : 'N/A'
     },
     {
       label: 'Freeze',
-      value: asset.params.freeze || 'N/A',
-      copyable: !!asset.params.freeze,
-      formatted: asset.params.freeze ? formatAddress(asset.params.freeze) : 'N/A'
+      value: p.freeze || 'N/A',
+      copyable: !!p.freeze,
+      formatted: p.freeze ? formatAddress(p.freeze) : 'N/A'
     },
     {
       label: 'Clawback',
-      value: asset.params.clawback || 'N/A',
-      copyable: !!asset.params.clawback,
-      formatted: asset.params.clawback ? formatAddress(asset.params.clawback) : 'N/A'
+      value: p.clawback || 'N/A',
+      copyable: !!p.clawback,
+      formatted: p.clawback ? formatAddress(p.clawback) : 'N/A'
     }
   ];
 
@@ -61,7 +62,7 @@ const AssetInfoCard: React.FC<AssetInfoCardProps> = ({ asset }) => {
               <span className="text-sm text-gray-900 font-mono">{item.formatted}</span>
               {item.copyable && item.value !== 'N/A' && (
                 <button
-                  onClick={() => copyToClipboard(item.value)}
+                  onClick={() => copyToClipboard(item.value ?? 'N/A')}
                   className="ml-2 p-1 text-gray-400 hover:text-gray-600"
                   title={`Copy ${item.label}`}
                 >

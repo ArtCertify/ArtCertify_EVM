@@ -15,7 +15,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({ asset }) => {
   const attachments = [];
   
   // Add asset URL as an attachment if it exists
-  if (asset.params.url) {
+  if (asset.params?.url) {
     attachments.push({
       id: 'asset-url',
       name: 'Asset URL',
@@ -26,7 +26,7 @@ const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({ asset }) => {
   }
   
   // Add metadata hash as attachment if it exists
-  if (asset.params.metadataHash) {
+  if (asset.params?.metadataHash) {
     attachments.push({
       id: 'metadata-hash',
       name: 'Metadata Hash',

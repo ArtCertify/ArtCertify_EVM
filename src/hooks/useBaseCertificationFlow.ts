@@ -24,7 +24,7 @@ export interface PeraCertificationFlowParams {
     author?: string;
     creation_date?: string;
     organization?: { name?: string; code?: string; type?: string; city?: string };
-    technical_specs?: Record<string, string>;
+    technical_specs?: Record<string, string | number>;
     asset_type?: string;
     unique_id?: string;
     [key: string]: unknown;
@@ -52,6 +52,10 @@ export interface CertificationFlowResult {
   assetId?: number;
   txId?: string;
   metadataCid?: string;
+  newMetadataCid?: string;
+  metadataUrl?: string;
+  confirmedRound?: number;
+  [key: string]: unknown;
 }
 
 export const useBaseCertificationFlow = () => {
@@ -144,9 +148,10 @@ export const useBaseCertificationFlow = () => {
         },
         { address: wallet.address }
       );
-      const hash = typeof result === 'object' && result?.hash ? result.hash : (result as string);
+      const hashRaw = typeof result === 'object' && result?.hash ? result.hash : (result as unknown as string);
+      const hash = hashRaw ? (typeof hashRaw === 'string' ? hashRaw : String(hashRaw)) : '';
       if (!hash) throw new Error('Transazione non inviata.');
-      await publicClient.waitForTransactionReceipt({ hash });
+      await publicClient.waitForTransactionReceipt({ hash: hash as `0x${string}` });
       const tokenId = Number(supplyBefore) + 1;
 
       setSteps((prev) =>
@@ -218,9 +223,10 @@ export const useBaseCertificationFlow = () => {
         },
         { address: wallet.address }
       );
-      const hash = typeof result === 'object' && result?.hash ? result.hash : (result as string);
+      const hashRaw = typeof result === 'object' && result?.hash ? result.hash : (result as unknown as string);
+      const hash = hashRaw ? (typeof hashRaw === 'string' ? hashRaw : String(hashRaw)) : '';
       if (!hash) throw new Error('Transazione non inviata.');
-      await publicClient.waitForTransactionReceipt({ hash });
+      await publicClient.waitForTransactionReceipt({ hash: hash as `0x${string}` });
       invalidateContractCache();
       return {
         txHash: hash,

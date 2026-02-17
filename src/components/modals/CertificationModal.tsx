@@ -39,7 +39,7 @@ export interface CertificationModalProps {
   steps: CertificationStep[];
   onRetryStep: (stepId: string) => void;
   isProcessing: boolean;
-  result?: MintingResult;
+  result?: MintingResult | null;
   onSuccess?: (result: MintingResult) => void;
 }
 

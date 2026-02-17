@@ -215,7 +215,7 @@ const OrganizationOnboarding: React.FC<OrganizationOnboardingProps> = ({ onBack,
       
       // Start certification flow for organization NFT - EXACTLY like certifications
       await startCertificationFlow({
-        certificationData,
+        certificationData: certificationData as Parameters<typeof startCertificationFlow>[0]['certificationData'],
         files: filesToUpload,
         assetName: nftName,
         unitName: unitName,

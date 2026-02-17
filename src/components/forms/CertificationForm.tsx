@@ -387,7 +387,7 @@ export const CertificationForm: React.FC<CertificationFormProps> = ({ onBack }) 
       const certificationData = prepareCertificationData();
 
       await startCertificationFlow({
-        certificationData,
+        certificationData: certificationData as Parameters<typeof startCertificationFlow>[0]['certificationData'],
         files: uploadedFile ? [uploadedFile] : [],
         assetName: formData.fullAssetName,
         unitName: formData.unitName,
@@ -1168,7 +1168,7 @@ export const CertificationForm: React.FC<CertificationFormProps> = ({ onBack }) 
             title="Certificazione"
             steps={steps}
             isProcessing={isProcessing}
-            result={mintResult}
+            result={mintResult ?? undefined}
             onRetryStep={retryStep}
           />
         )

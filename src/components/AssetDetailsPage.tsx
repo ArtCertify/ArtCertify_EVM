@@ -40,7 +40,7 @@ const AssetDetailsPage: React.FC = () => {
   const { assetId } = useParams<{ assetId: string }>();
   const navigate = useNavigate();
   const { data: asset, loading, error, execute } = useAsyncState<AssetInfo>();
-  const { userAddress, hasValidToken } = useAuth();
+  const { hasValidToken } = useAuth();
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('certificate');
   const [expandedVersions, setExpandedVersions] = useState<Set<number>>(new Set());
@@ -66,11 +66,13 @@ const AssetDetailsPage: React.FC = () => {
   const targetAssetId = assetId;
 
   useEffect(() => {
-    if (!targetAssetId) {
-      return;
-    }
-
-    execute(() => getCertificateByTokenId(targetAssetId!));
+    if (!targetAssetId) return;
+    execute(() =>
+      getCertificateByTokenId(targetAssetId!).then((c) => {
+        if (!c) throw new Error('Certificato non trovato');
+        return c;
+      })
+    );
   }, [targetAssetId, execute]);
 
   // Creation date from asset
@@ -125,8 +127,9 @@ const AssetDetailsPage: React.FC = () => {
 
     if (!asset) return 'Documento';
     
-    if (asset.nftMetadata?.certification_data?.asset_type) {
-      const assetType = asset.nftMetadata.certification_data.asset_type.toLowerCase();
+    const certData = asset.nftMetadata?.certification_data as { asset_type?: string } | undefined;
+    if (certData?.asset_type) {
+      const assetType = String(certData.asset_type).toLowerCase();
       if (assetType === 'document') return 'Documento';
       if (assetType.includes('artefatto') || assetType === 'artifact' || 
           assetType === 'video' || assetType === 'modello-3d' || 
@@ -135,9 +138,10 @@ const AssetDetailsPage: React.FC = () => {
       }
     }
 
-    if (asset.nftMetadata?.attributes) {
-      const assetTypeAttr = asset.nftMetadata.attributes.find(
-        attr => attr.trait_type === 'Asset Type' || attr.trait_type === 'Tipo Certificazione'
+    const attrs = asset.nftMetadata?.attributes as Array<{ trait_type?: string; value?: unknown }> | undefined;
+    if (attrs?.length) {
+      const assetTypeAttr = attrs.find(
+        (attr: { trait_type?: string; value?: unknown }) => attr.trait_type === 'Asset Type' || attr.trait_type === 'Tipo Certificazione'
       );
       if (assetTypeAttr) {
         const value = String(assetTypeAttr.value).toLowerCase();
@@ -150,16 +154,16 @@ const AssetDetailsPage: React.FC = () => {
       }
     }
 
-    if (asset.params.name) {
-      const name = asset.params.name.toLowerCase();
+    if (asset.params?.name) {
+      const name = String(asset.params?.name).toLowerCase();
       if (name.includes('document') || name.includes('doc')) return 'Documento';
       if (name.includes('artefatto') || name.includes('artifact') || 
           name.includes('video') || name.includes('modello') || 
           name.includes('sbt')) return 'Artefatto';
     }
 
-    if (asset.params.unitName) {
-      const unitName = asset.params.unitName.toLowerCase();
+    if (asset.params?.unitName) {
+      const unitName = String(asset.params?.unitName).toLowerCase();
       if (unitName.includes('doc')) return 'Documento';
       if (unitName.includes('art') || unitName.includes('sbt') || unitName.includes('cert')) return 'Artefatto';
     }
@@ -366,7 +370,7 @@ const AssetDetailsPage: React.FC = () => {
                         {getCertificationType()}
                       </span>
                       <span className="bg-slate-600 text-slate-300 text-xs font-medium px-2 py-1 rounded-md">
-                        {ipfsMetadata?.properties?.form_data?.unitName || asset.params.unitName || 'NFT'}
+                        {ipfsMetadata?.properties?.form_data?.unitName || asset.params?.unitName || 'NFT'}
                       </span>
                     </div>
                   </div>
@@ -379,7 +383,7 @@ const AssetDetailsPage: React.FC = () => {
                         <HashtagIcon className="w-4 h-4 text-slate-400" />
                         <span className="text-xs text-slate-400">Asset ID</span>
                       </div>
-                      <p className="text-sm font-semibold text-white break-all">{asset.index}</p>
+                      <p className="text-sm font-semibold text-white break-all">{asset.index ?? asset.tokenId}</p>
                     </div>
                     
                     <div className="bg-slate-700/50 rounded-lg p-3">
@@ -401,8 +405,8 @@ const AssetDetailsPage: React.FC = () => {
                       </div>
                       <button
                         onClick={async () => {
-                          if (asset.params.reserve) {
-                            const result = await IPFSUrlService.getReserveAddressUrl(asset.params.reserve);
+                          if (asset.params?.reserve) {
+                            const result = await IPFSUrlService.getReserveAddressUrl(asset.params?.reserve);
                             if (result.success && result.gatewayUrl) {
                               window.open(result.gatewayUrl, '_blank', 'noopener,noreferrer');
                             }
@@ -465,27 +469,27 @@ const AssetDetailsPage: React.FC = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                           <InfoCard
                             title="Asset ID"
-                            value={asset.index.toString()}
+                            value={String(asset.index ?? asset.tokenId)}
                             icon={<HashtagIcon className="h-4 w-4" />}
                             copyable
                             externalUrl={getAssetExplorerUrl(asset.index ?? asset.tokenId)}
                           />
                           <InfoCard
                             title="Unit Name"
-                            value={asset.params.unitName || 'Non specificato'}
+                            value={asset.params?.unitName || 'Non specificato'}
                             icon={<TagIcon className="h-4 w-4" />}
                             copyable
                           />
                           <InfoCard
                             title="Reserve Address"
-                            value={asset.params.reserve ? truncateAddress(asset.params.reserve) : 'Non specificato'}
-                            copyValue={asset.params.reserve}
+                            value={asset.params?.reserve ? truncateAddress(asset.params?.reserve) : 'Non specificato'}
+                            copyValue={asset.params?.reserve}
                             icon={<LinkIcon className="h-4 w-4" />}
-                            copyable={!!asset.params.reserve}
+                            copyable={!!asset.params?.reserve}
                           />
                           <InfoCard
                             title="Totale Supply"
-                            value={asset.params.total.toString()}
+                            value={String(asset.params?.total ?? '')}
                             icon={<CubeIcon className="h-4 w-4" />}
                           />
                           <button
@@ -508,7 +512,7 @@ const AssetDetailsPage: React.FC = () => {
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-medium text-white">Creatore</p>
-                                <p className="text-xs text-slate-400 font-mono">{truncateAddress(asset.params.creator, 6, 4)}</p>
+                                <p className="text-xs text-slate-400 font-mono">{truncateAddress(asset.params?.creator ?? '', 6, 4)}</p>
                               </div>
                               <UserIcon className="h-4 w-4 text-purple-400" />
                             </div>
@@ -722,7 +726,7 @@ const AssetDetailsPage: React.FC = () => {
                       {/* Versions List */}
                       <div className="space-y-3">
                         {sortedVersioningInfo.map((version, index) => {
-                          const isCurrentVersion = version.reserveAddress === asset.params.reserve;
+                          const isCurrentVersion = version.reserveAddress === asset.params?.reserve;
                           const uniqueKey = version.id || version.transactionId || `version-${index}`;
                           
                           return (
@@ -809,7 +813,12 @@ const AssetDetailsPage: React.FC = () => {
             ipfsMetadata={ipfsMetadata || undefined}
             onAssetUpdated={() => {
               if (targetAssetId) {
-                execute(() => getCertificateByTokenId(targetAssetId!));
+                execute(() =>
+                  getCertificateByTokenId(targetAssetId!).then((c) => {
+                    if (!c) throw new Error('Certificato non trovato');
+                    return c;
+                  })
+                );
               }
             }}
           />

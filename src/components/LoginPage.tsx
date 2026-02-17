@@ -32,9 +32,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     privyLogin();
   };
 
-  // Non usato: tenuto per compatibilità con HMR/cache (prima era usato in disabled)
-  const isConnecting = false;
-
   return (
     <BackgroundLayout
       className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-blue-900 flex items-center justify-center px-4"

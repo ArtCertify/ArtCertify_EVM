@@ -10,6 +10,7 @@ import { useProjectsCache } from '../hooks/useProjectsCache';
 import { WalletSignatureModal } from './modals/WalletSignatureModal';
 import OrganizationOnboarding from './OrganizationOnboarding';
 import { useOrganization } from '../contexts/OrganizationContext';
+import { useCertificateNames } from '../hooks/useCertificateNames';
 import type { AssetInfo } from '../types/asset';
 
 // Project Card Component
@@ -78,7 +79,7 @@ interface CertificationsPageState {
 export const DashboardPage: React.FC = () => {
   const { userAddress, isAuthenticated, hasValidToken } = useAuth();
   const { organizationData } = useOrganization();
-  const { getCachedProjects, setCachedProjects, clearProjectsCache } = useProjectsCache();
+  const { getCachedProjects: _getCachedProjects, setCachedProjects, clearProjectsCache } = useProjectsCache();
   const [isSignatureModalOpen, setIsSignatureModalOpen] = useState(false);
   const [state, setState] = useState<CertificationsPageState>({
     certificates: [],
@@ -109,7 +110,7 @@ export const DashboardPage: React.FC = () => {
       // Extract and cache project names
       const projectNames = new Set<string>();
       ownedNFTs.forEach(cert => {
-        const projectName = extractProjectName(cert.params.name || '');
+        const projectName = extractProjectName(cert.params?.name || '');
         if (projectName !== 'Senza Progetto') {
           projectNames.add(projectName);
         }
@@ -152,7 +153,7 @@ export const DashboardPage: React.FC = () => {
         // Extract and cache project names
         const projectNames = new Set<string>();
         ownedNFTs.forEach(cert => {
-          const projectName = extractProjectName(cert.params.name || '');
+          const projectName = extractProjectName(cert.params?.name || '');
           if (projectName !== 'Senza Progetto') {
             projectNames.add(projectName);
           }
@@ -221,62 +222,49 @@ export const DashboardPage: React.FC = () => {
     }));
   };
 
-  // Extract project name from title format "Project / File"
+  // Nome progetto = tutto ciò che sta prima di " / " nel name (es. "Progetto A / File B" → "Progetto A")
   const extractProjectName = (title: string): string => {
-    if (!title) return 'Senza Progetto';
-    
-    const parts = title.split(' / ');
-    if (parts.length === 2 && parts[0].trim()) {
-      return parts[0].trim();
-    }
-    
+    if (!title?.trim()) return 'Senza Progetto';
+    const idx = title.indexOf(' / ');
+    if (idx >= 0) return title.slice(0, idx).trim() || 'Senza Progetto';
     return 'Senza Progetto';
   };
 
   // Certificati "classici" (escludiamo l'NFT organizzazione dalla lista)
   const classicCertificates = React.useMemo(() => {
-    if (!organizationData?.assetId != null && organizationData?.assetId !== undefined)
+    if (!organizationData || organizationData.assetId == null || organizationData.assetId === undefined)
       return state.certificates;
-    const orgId = organizationData!.assetId;
+    const orgId = organizationData.assetId;
     return state.certificates.filter(
       cert => Number(cert.tokenId) !== Number(orgId) && cert.index !== orgId
     );
-  }, [state.certificates, organizationData?.assetId]);
+  }, [state.certificates, organizationData?.assetId, organizationData]);
 
-  // Get unique projects from certificates (excluding "Senza Progetto")
-  // Uses cache when available, otherwise extracts from current certificates
+  // Nomi da metadata IPFS (su Base il nome è solo lì; formato "Progetto / File" → progetto = tutto prima di " / ")
+  const certificateNames = useCertificateNames(classicCertificates);
+
+  const getCertDisplayName = (cert: AssetInfo): string =>
+    certificateNames.get(cert.tokenId ?? cert.index ?? '') ?? cert.params?.name ?? '';
+
+  // Get unique projects: nome progetto = tutto ciò che sta prima di " / " nel name (da metadata IPFS)
   const getUniqueProjects = (): string[] => {
-    if (userAddress) {
-      const cachedProjects = getCachedProjects(userAddress);
-      if (cachedProjects.length > 0) {
-        return cachedProjects;
-      }
-    }
-    
-    // Fallback to extracting from current certificates (solo certificati classici)
     const projects = new Set<string>();
     classicCertificates.forEach(cert => {
-      const projectName = extractProjectName(cert.params.name || '');
-      // Only include projects that are not "Senza Progetto"
-      if (projectName !== 'Senza Progetto') {
-        projects.add(projectName);
-      }
+      const fullName = getCertDisplayName(cert);
+      const projectName = extractProjectName(fullName) || 'Senza Progetto';
+      projects.add(projectName);
     });
     return Array.from(projects).sort();
   };
 
-  // Group certificates by project (solo certificati classici)
+  // Group certificates by project (progetto = tutto prima di " / " nel name da metadata)
   const getProjectsData = () => {
     const projectsMap = new Map<string, AssetInfo[]>();
-    
     classicCertificates.forEach(cert => {
-      const projectName = extractProjectName(cert.params.name || '');
-      if (projectName !== 'Senza Progetto') {
-        if (!projectsMap.has(projectName)) {
-          projectsMap.set(projectName, []);
-        }
-        projectsMap.get(projectName)!.push(cert);
-      }
+      const fullName = getCertDisplayName(cert);
+      const projectName = extractProjectName(fullName) || 'Senza Progetto';
+      if (!projectsMap.has(projectName)) projectsMap.set(projectName, []);
+      projectsMap.get(projectName)!.push(cert);
     });
     
     return Array.from(projectsMap.entries()).map(([projectName, certificates]) => ({
@@ -321,36 +309,34 @@ export const DashboardPage: React.FC = () => {
     });
   };
 
-  // Filter and sort certificates
+  // Filter and sort certificates; nome da metadata IPFS (progetto = tutto prima di " / ")
   const filteredAndSortedCertificates = React.useMemo(() => {
-    // First filter: only show certificates with proper "Project / File" format
-    let filtered = state.certificates.filter(cert => {
-      const title = cert.params.name || '';
-      // Only include certificates that have the " / " separator
-      return title.includes(' / ');
-    });
+    let filtered = [...classicCertificates];
 
-    // Apply search filter
     if (state.searchTerm) {
       const searchLower = state.searchTerm.toLowerCase();
-      filtered = filtered.filter(cert => 
-        cert.params.name?.toLowerCase().includes(searchLower) ||
-        cert.index.toString().includes(searchLower) ||
-        cert.params.creator.toLowerCase().includes(searchLower) ||
-        cert.description?.toLowerCase().includes(searchLower)
-      );
+      filtered = filtered.filter(cert => {
+        const name = certificateNames.get(cert.tokenId ?? cert.index ?? '') ?? cert.params?.name ?? '';
+        return (
+          name.toLowerCase().includes(searchLower) ||
+          String(cert.index ?? cert.tokenId).includes(searchLower) ||
+          (cert.params?.creator ?? '').toLowerCase().includes(searchLower) ||
+          (cert.description ?? '').toLowerCase().includes(searchLower)
+        );
+      });
     }
 
-    // Apply project filter
     if (state.filterProject !== 'all') {
       filtered = filtered.filter(cert => {
-        const projectName = extractProjectName(cert.params.name || '');
+        const fullName = certificateNames.get(cert.tokenId ?? cert.index ?? '') ?? cert.params?.name ?? '';
+        const projectName = extractProjectName(fullName);
         return projectName === state.filterProject;
       });
     }
 
-    // Apply sorting
     const sorted = [...filtered].sort((a, b) => {
+      const aName = certificateNames.get(a.tokenId ?? a.index ?? '') ?? a.params?.name ?? '';
+      const bName = certificateNames.get(b.tokenId ?? b.index ?? '') ?? b.params?.name ?? '';
       switch (state.sortBy) {
         case 'date-desc': {
           const aRound = Number(a['created-at-round'] || 0);
@@ -363,16 +349,16 @@ export const DashboardPage: React.FC = () => {
           return aRound - bRound;
         }
         case 'name-asc':
-          return (a.params.name || '').localeCompare(b.params.name || '');
+          return aName.localeCompare(bName);
         case 'name-desc':
-          return (b.params.name || '').localeCompare(a.params.name || '');
+          return bName.localeCompare(aName);
         default:
           return 0;
       }
     });
 
     return sorted;
-  }, [state.certificates, state.searchTerm, state.filterProject, state.sortBy]);
+  }, [classicCertificates, certificateNames, state.searchTerm, state.filterProject, state.sortBy]);
 
   const getEmptyStateMessage = () => {
     if (state.searchTerm || state.filterProject !== 'all') {
@@ -391,15 +377,11 @@ export const DashboardPage: React.FC = () => {
   };
 
   const emptyState = getEmptyStateMessage();
-  
-  // Check if user has an organization NFT
-  const hasOrganizationNFT = state.certificates.some(cert =>
-    isOrgNftName(cert.params?.name)
-  );
-  
-  
-  
-  // Check if filtered certificates list is empty (including when all certificates are filtered out)
+
+  // Ha un NFT organizzazione se il contesto ha caricato i dati org (da metadata IPFS su Base)
+  const hasOrganizationNFT = organizationData != null;
+
+  // Lista certificati classici vuota (nessun certificato oltre eventuale NFT org)
   const hasNoFilteredCertificates = !state.loading && filteredAndSortedCertificates.length === 0;
   
 
@@ -504,11 +486,11 @@ export const DashboardPage: React.FC = () => {
               Benvenuto! 🎉
             </h1>
             <p className="text-lg text-slate-300 mb-8 max-w-2xl mx-auto">
-              Il tuo <Link to="/profile" className="text-blue-400 hover:text-blue-300 underline transition-colors">Profilo Organizzazione</Link> è stato creato con successo! Ora puoi iniziare a certificare artefatti, documenti e opere d'arte.
+              Hai già un profilo organizzazione. Ora puoi certificare artefatti, documenti e opere d'arte con NFT classici.
             </p>
-            
-            {/* Bottone per creare prima certificazione */}
-            <div className="flex justify-center">
+
+            {/* Bottoni: prima certificazione (principale) e profilo org (secondario) */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               {hasValidToken ? (
                 <Link
                   to="/certificates"
@@ -526,6 +508,13 @@ export const DashboardPage: React.FC = () => {
                   Crea la tua prima certificazione
                 </button>
               )}
+              <Link
+                to="/profile"
+                className="inline-flex items-center gap-2 px-6 py-3 text-slate-300 hover:text-white border border-slate-600 hover:border-slate-500 rounded-full transition-colors"
+              >
+                <BuildingOfficeIcon className="h-5 w-5" />
+                Vai al profilo organizzazione
+              </Link>
             </div>
           </div>
         </div>

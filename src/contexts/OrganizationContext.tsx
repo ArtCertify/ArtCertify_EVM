@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { nftService } from '../services/nftService';
 import { IPFSUrlService } from '../services/ipfsUrlService';
+import { getCachedMetadata } from '../services/ipfsMetadataCache';
 import { isOrgNftName, orgDisplayName } from '../utils/orgNftName';
 
 function toDisplayImageUrl(image: string | undefined): string {
@@ -67,53 +68,49 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         return;
       }
 
-      // In Base il nome "ORG: ..." è solo nel JSON su IPFS. Cerchiamo l'NFT il cui metadata.name inizia con il prefisso org.
+      // In Base il nome "ORG: ..." è solo nel JSON su IPFS. Usiamo cache condivisa (1 fetch per NFT).
       const results = await Promise.all(
         ownedNFTs.map(async (cert) => {
-          const uri = cert.params?.reserve;
+          const uri = cert.params?.reserve ?? cert.tokenURI;
           if (!uri) return { cert, json: null };
-          const res = IPFSUrlService.getReserveAddressUrl(uri);
-          if (!res.success || !res.gatewayUrl) return { cert, json: null };
           try {
-            const r = await fetch(res.gatewayUrl);
-            if (!r.ok) return { cert, json: null };
-            const json = await r.json();
-            return { cert, json };
+            const json = await getCachedMetadata(uri);
+            return { cert, json: json ?? null };
           } catch {
             return { cert, json: null };
           }
         })
       );
 
-      const orgEntry = results.find((r) => isOrgNftName(r.json?.name));
+      const orgEntry = results.find((r) => isOrgNftName(String(r.json?.name ?? '')));
       if (!orgEntry?.json || !orgEntry.cert.params?.reserve) {
         setOrganizationData(null);
         setLoading(false);
         return;
       }
 
-      const jsonData = orgEntry.json;
+      const jsonData = orgEntry.json as Record<string, unknown>;
       const organizationNFT = orgEntry.cert;
-      const cert = jsonData.certification_data || {};
-      const org = cert.organization || {};
-      const tech = cert.technical_specs || {};
-      const form = jsonData.properties?.form_data || {};
-      const orgName = orgDisplayName(jsonData.name) || org.name || 'Organizzazione';
-      const orgImage = toDisplayImageUrl(jsonData.image);
+      const cert = (jsonData.certification_data as Record<string, unknown>) || {};
+      const org = (cert.organization as Record<string, unknown>) || {};
+      const tech = (cert.technical_specs as Record<string, unknown>) || {};
+      const form = (jsonData.properties as Record<string, unknown>)?.form_data as Record<string, unknown> | undefined || {};
+      const orgName = orgDisplayName(String(jsonData.name ?? '')) || String(org.name ?? '') || 'Organizzazione';
+      const orgImage = toDisplayImageUrl(String(jsonData.image ?? ''));
 
       setOrganizationData({
         name: orgName,
         image: orgImage,
-        description: jsonData.description ?? tech.description ?? form.description,
-        type: org.type ?? org.code ?? form.customType,
-        city: org.city ?? form.fileOrigin,
-        vatNumber: org.vatNumber ?? form.vatNumber,
-        phone: org.phone ?? form.phone,
-        email: org.email ?? form.email,
-        website: org.website ?? form.website,
-        address: org.address ?? form.address,
-        assetId: organizationNFT.index ?? organizationNFT.tokenId,
-        reserveAddress: organizationNFT.params.reserve,
+        description: String(jsonData.description ?? tech.description ?? form.description ?? ''),
+        type: String(org.type ?? org.code ?? form.customType ?? ''),
+        city: String(org.city ?? form.fileOrigin ?? ''),
+        vatNumber: String(org.vatNumber ?? form.vatNumber ?? ''),
+        phone: String(org.phone ?? form.phone ?? ''),
+        email: String(org.email ?? form.email ?? ''),
+        website: String(org.website ?? form.website ?? ''),
+        address: String(org.address ?? form.address ?? ''),
+        assetId: Number(organizationNFT.index ?? organizationNFT.tokenId),
+        reserveAddress: organizationNFT.params?.reserve ?? '',
         rawData: jsonData,
       });
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { IPFSUrlService } from '../services/ipfsUrlService';
-import { getAssetExplorerUrl } from '../config/environment';
+import { getCachedMetadata } from '../services/ipfsMetadataCache';
 import type { AssetInfo } from '../types/asset';
 import { CheckBadgeIcon } from '@heroicons/react/24/outline';
 
@@ -15,31 +15,20 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({ asset, loading
   const [creationDate, setCreationDate] = useState<number | null>(null);
   const [nameFromMetadata, setNameFromMetadata] = useState<string | null>(null);
 
-  // Resolve tokenURI (ipfs:// or CID) to metadata gateway URL
+  // Metadata da cache IPFS (1 fetch per NFT condiviso con dashboard e org context)
   React.useEffect(() => {
     const uri = asset.tokenURI || asset.params?.reserve;
-    if (uri) {
-      const result = IPFSUrlService.getReserveAddressUrl(uri);
-      if (result.success && result.gatewayUrl) {
-        setMetadataUrl(result.gatewayUrl);
-      }
-    }
-  }, [asset.tokenURI, asset.params?.reserve]);
-
-  // Nome dal JSON su IPFS (in Base non abbiamo params.name dalla chain)
-  React.useEffect(() => {
-    if (!metadataUrl) return;
+    if (!uri) return;
     let cancelled = false;
-    fetch(metadataUrl)
-      .then((r) => r.ok ? r.json() : null)
-      .then((json) => {
-        if (cancelled || !json) return;
-        const name = json.name ?? json.certification_data?.title ?? null;
-        if (name) setNameFromMetadata(name);
-      })
-      .catch(() => {});
+    const res = IPFSUrlService.getReserveAddressUrl(uri);
+    if (res.success && res.gatewayUrl) setMetadataUrl(res.gatewayUrl);
+    getCachedMetadata(uri).then((json) => {
+      if (cancelled || !json) return;
+      const name = (json.name ?? (json.certification_data as { title?: string })?.title) ?? null;
+      if (name) setNameFromMetadata(String(name));
+    });
     return () => { cancelled = true; };
-  }, [metadataUrl]);
+  }, [asset.tokenURI, asset.params?.reserve]);
 
   // Creation date from metadata or placeholder
   React.useEffect(() => {

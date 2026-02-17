@@ -8,7 +8,7 @@ import type { CertificateInfo } from '../types/asset';
  */
 export async function getOwnedCertificates(address: string): Promise<CertificateInfo[]> {
   const addr = config.sbtContractAddress;
-  if (!addr || addr === '') return [];
+  if (!addr) return [];
 
   try {
     const supply = await baseContract.getTotalSupply();
@@ -52,7 +52,7 @@ export async function getCertificateByTokenId(
   tokenId: number | string
 ): Promise<CertificateInfo | null> {
   const addr = config.sbtContractAddress;
-  if (!addr || addr === '') return null;
+  if (!addr) return null;
 
   const id = BigInt(tokenId);
   try {

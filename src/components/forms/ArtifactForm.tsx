@@ -443,7 +443,7 @@ export const ArtifactForm: React.FC<ArtifactFormProps> = ({ onBack }) => {
         steps={steps}
         onRetryStep={retryStep}
         isProcessing={isProcessing}
-        result={mintResult}
+        result={mintResult ?? undefined}
         onSuccess={handleCertificationSuccess}
       />
     </>

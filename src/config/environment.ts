@@ -17,7 +17,6 @@ const getEnvVar = (key: string, allowEmpty: boolean = false): string => {
 
 // Base network (chainId 8453)
 const BASE_CHAIN_ID = 8453;
-const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 export const config = {
   // Privy
@@ -36,6 +35,8 @@ export const config = {
   // Pinata IPFS (optional)
   pinataGateway: getEnvVar('VITE_PINATA_GATEWAY', true),
   pinataJwt: getEnvVar('VITE_PINATA_JWT', true),
+
+  network: { isMainnet: true, isTestnet: false },
 };
 
 export const getExplorerUrl = () => config.base.explorerUrl;

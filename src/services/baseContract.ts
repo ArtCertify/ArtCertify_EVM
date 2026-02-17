@@ -18,7 +18,7 @@ function cached<T>(key: string, fn: () => Promise<T>): Promise<T> {
 
 function getContractAddress(): Address {
   const addr = config.sbtContractAddress;
-  if (!addr || addr === '') throw new Error('VITE_SBT_CONTRACT_ADDRESS is not set');
+  if (!addr) throw new Error('VITE_SBT_CONTRACT_ADDRESS is not set');
   return addr as Address;
 }
 
