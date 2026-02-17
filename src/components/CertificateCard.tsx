@@ -13,6 +13,7 @@ interface CertificateCardProps {
 export const CertificateCard: React.FC<CertificateCardProps> = ({ asset, loading = false }) => {
   const [metadataUrl, setMetadataUrl] = useState<string | null>(null);
   const [creationDate, setCreationDate] = useState<number | null>(null);
+  const [nameFromMetadata, setNameFromMetadata] = useState<string | null>(null);
 
   // Resolve tokenURI (ipfs:// or CID) to metadata gateway URL
   React.useEffect(() => {
@@ -24,6 +25,21 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({ asset, loading
       }
     }
   }, [asset.tokenURI, asset.params?.reserve]);
+
+  // Nome dal JSON su IPFS (in Base non abbiamo params.name dalla chain)
+  React.useEffect(() => {
+    if (!metadataUrl) return;
+    let cancelled = false;
+    fetch(metadataUrl)
+      .then((r) => r.ok ? r.json() : null)
+      .then((json) => {
+        if (cancelled || !json) return;
+        const name = json.name ?? json.certification_data?.title ?? null;
+        if (name) setNameFromMetadata(name);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [metadataUrl]);
 
   // Creation date from metadata or placeholder
   React.useEffect(() => {
@@ -108,9 +124,8 @@ export const CertificateCard: React.FC<CertificateCardProps> = ({ asset, loading
           <div className="flex justify-between items-start mb-4">
             <div className="flex-1">
               {(() => {
-                const title = asset.params?.name || `Certificate ${assetId}`;
+                const title = nameFromMetadata ?? asset.params?.name ?? `Certificate ${assetId}`;
                 const { projectName, certificationName } = parseTitle(title);
-                
                 return (
                   <>
                     <h3 className="text-base font-bold text-white mb-1 group-hover:text-blue-100 transition-colors">

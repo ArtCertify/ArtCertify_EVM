@@ -92,3 +92,54 @@ export function invalidateContractCache(): void {
 export function getSbtContractAddress(): Address {
   return getContractAddress();
 }
+
+const MULTICALL_BATCH = 50;
+
+/**
+ * Lettura in batch degli owner di molti token (1 RPC ogni MULTICALL_BATCH token).
+ */
+export async function getOwnersBatch(tokenIds: bigint[]): Promise<{ tokenId: bigint; owner: Address }[]> {
+  if (tokenIds.length === 0) return [];
+  const contract = getContractAddress();
+  const out: { tokenId: bigint; owner: Address }[] = [];
+  for (let i = 0; i < tokenIds.length; i += MULTICALL_BATCH) {
+    const chunk = tokenIds.slice(i, i + MULTICALL_BATCH);
+    const contracts = chunk.map((id) => ({
+      address: contract,
+      abi: ArtCertifySBTAbi,
+      functionName: 'ownerOf' as const,
+      args: [id] as const,
+    }));
+    const results = await publicClient.multicall({ contracts, allowFailure: true });
+    for (let j = 0; j < chunk.length; j++) {
+      const r = results[j];
+      if (r?.status === 'success' && r.result) out.push({ tokenId: chunk[j], owner: r.result });
+    }
+  }
+  return out;
+}
+
+/**
+ * Lettura in batch dei tokenURI di molti token (1 RPC ogni MULTICALL_BATCH token).
+ */
+export async function getTokenURIsBatch(tokenIds: bigint[]): Promise<{ tokenId: bigint; tokenURI: string }[]> {
+  if (tokenIds.length === 0) return [];
+  const contract = getContractAddress();
+  const out: { tokenId: bigint; tokenURI: string }[] = [];
+  for (let i = 0; i < tokenIds.length; i += MULTICALL_BATCH) {
+    const chunk = tokenIds.slice(i, i + MULTICALL_BATCH);
+    const contracts = chunk.map((id) => ({
+      address: contract,
+      abi: ArtCertifySBTAbi,
+      functionName: 'tokenURI' as const,
+      args: [id] as const,
+    }));
+    const results = await publicClient.multicall({ contracts, allowFailure: true });
+    for (let j = 0; j < chunk.length; j++) {
+      const r = results[j];
+      if (r?.status === 'success' && typeof r.result === 'string')
+        out.push({ tokenId: chunk[j], tokenURI: r.result });
+    }
+  }
+  return out;
+}

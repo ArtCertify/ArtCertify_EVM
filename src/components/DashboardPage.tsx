@@ -122,11 +122,14 @@ export const DashboardPage: React.FC = () => {
         loading: false 
       }));
     } catch (error) {
-      // Error fetching certificates
-      setState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        error: error instanceof Error ? error.message : 'Errore nel caricamento delle certificazioni'
+      const msg = error instanceof Error ? error.message : 'Errore nel caricamento delle certificazioni';
+      const is429 = /429|Too Many Requests/i.test(msg);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: is429
+          ? 'Troppe richieste al RPC (429). Imposta VITE_BASE_RPC_URL con un provider come Alchemy nel file .env oppure riprova tra poco.'
+          : msg,
       }));
     }
   };
@@ -163,10 +166,14 @@ export const DashboardPage: React.FC = () => {
         }));
       } catch (error) {
         // Error fetching certificates
+        const msg = error instanceof Error ? error.message : 'Errore nel caricamento delle certificazioni';
+        const is429 = /429|Too Many Requests/i.test(msg);
         setState(prev => ({
           ...prev,
-          error: error instanceof Error ? error.message : 'Failed to fetch certificates',
-          loading: false
+          error: is429
+            ? 'Troppe richieste al RPC (429). Imposta VITE_BASE_RPC_URL con un provider come Alchemy nel file .env oppure riprova tra poco.'
+            : msg,
+          loading: false,
         }));
       }
     };
@@ -388,9 +395,9 @@ export const DashboardPage: React.FC = () => {
     return (
       <ResponsiveLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <ErrorMessage 
+          <ErrorMessage
             message={state.error}
-            onRetry={() => window.location.reload()}
+            onRetry={() => refetchCertificates()}
           />
         </div>
       </ResponsiveLayout>

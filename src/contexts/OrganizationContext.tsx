@@ -51,54 +51,61 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
     setError(null);
 
     try {
-      // Fetch all NFTs owned by the user
       const ownedNFTs = await nftService.getOwnedNFTs(userAddress);
-      
-      // Find organization NFT
-      const organizationNFT = ownedNFTs.find(cert => 
-        cert.params?.name?.startsWith('ORG: ')
-      );
-
-      if (!organizationNFT?.params?.reserve) {
+      if (ownedNFTs.length === 0) {
         setOrganizationData(null);
         setLoading(false);
         return;
       }
 
-      // Convert reserve address to CID and fetch JSON
-      const result = IPFSUrlService.getReserveAddressUrl(organizationNFT.params.reserve);
-      if (!result.success || !result.gatewayUrl) {
-        setError('Errore nella conversione del reserve address');
+      // In Base il nome "ORG: ..." è solo nel JSON su IPFS, non in params. Leggiamo il JSON per ogni NFT e cerchiamo quello con name che inizia per "ORG: ".
+      const results = await Promise.all(
+        ownedNFTs.map(async (cert) => {
+          const uri = cert.params?.reserve;
+          if (!uri) return { cert, json: null };
+          const res = IPFSUrlService.getReserveAddressUrl(uri);
+          if (!res.success || !res.gatewayUrl) return { cert, json: null };
+          try {
+            const r = await fetch(res.gatewayUrl);
+            if (!r.ok) return { cert, json: null };
+            const json = await r.json();
+            return { cert, json };
+          } catch {
+            return { cert, json: null };
+          }
+        })
+      );
+
+      const orgEntry = results.find((r) => r.json?.name?.startsWith?.('ORG: '));
+      if (!orgEntry?.json || !orgEntry.cert.params?.reserve) {
+        setOrganizationData(null);
         setLoading(false);
         return;
       }
 
-      // Fetch JSON data
-      const response = await fetch(result.gatewayUrl);
-      if (!response.ok) {
-        throw new Error('Errore nel fetch dei dati organizzazione');
-      }
-      
-      const jsonData = await response.json();
-      
-      // Extract organization data
-      const orgName = jsonData.name?.replace('ORG: ', '') || 'Organizzazione';
+      const jsonData = orgEntry.json;
+      const organizationNFT = orgEntry.cert;
+      const cert = jsonData.certification_data || {};
+      const org = cert.organization || {};
+      const tech = cert.technical_specs || {};
+      const form = jsonData.properties?.form_data || {};
+      const orgName = jsonData.name?.replace('ORG: ', '') || org.name || 'Organizzazione';
       const orgImage = jsonData.image || '';
-      
+
       setOrganizationData({
         name: orgName,
         image: orgImage,
-        description: jsonData.description,
-        type: jsonData.properties?.form_data?.customType,
-        city: jsonData.properties?.form_data?.fileOrigin,
-        vatNumber: jsonData.properties?.form_data?.vatNumber,
-        phone: jsonData.properties?.form_data?.phone,
-        email: jsonData.properties?.form_data?.email,
-        website: jsonData.properties?.form_data?.website,
-        address: jsonData.properties?.form_data?.address,
-        assetId: organizationNFT.index,
+        description: jsonData.description ?? tech.description ?? form.description,
+        type: org.type ?? org.code ?? form.customType,
+        city: org.city ?? form.fileOrigin,
+        vatNumber: org.vatNumber ?? form.vatNumber,
+        phone: org.phone ?? form.phone,
+        email: org.email ?? form.email,
+        website: org.website ?? form.website,
+        address: org.address ?? form.address,
+        assetId: organizationNFT.index ?? organizationNFT.tokenId,
         reserveAddress: organizationNFT.params.reserve,
-        rawData: jsonData
+        rawData: jsonData,
       });
 
 

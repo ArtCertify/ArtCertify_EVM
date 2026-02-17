@@ -353,10 +353,10 @@ const AssetDetailsPage: React.FC = () => {
                       <div className="flex-1">
                         <div className="space-y-0.5">
                           <h2 className="text-lg sm:text-xl font-bold text-white leading-tight">
-                            {ipfsMetadata?.properties?.form_data?.assetName || 'Nome Certificazione'}
+                            {ipfsMetadata?.properties?.form_data?.assetName || ipfsMetadata?.name || (ipfsMetadata as any)?.certification_data?.title || 'Nome Certificazione'}
                           </h2>
                           <p className="text-slate-300 text-sm">
-                            {ipfsMetadata?.properties?.form_data?.projectName || 'Nome Progetto'}
+                            {ipfsMetadata?.properties?.form_data?.projectName || (ipfsMetadata as any)?.certification_data?.organization?.name || 'Nome Progetto'}
                           </p>
                         </div>
                       </div>
