@@ -4,11 +4,13 @@ import {
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
   BuildingOfficeIcon,
-  UserIcon
+  UserIcon,
+  WalletIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useOrganization } from '../../contexts/OrganizationContext';
 import { IPFSUrlService } from '../../services/ipfsUrlService';
+import { WalletModal } from '../modals/WalletModal';
 import BackgroundLayout from './BackgroundLayout';
 
 interface ResponsiveLayoutProps {
@@ -19,6 +21,7 @@ interface ResponsiveLayoutProps {
 
 const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({ children, isUploadingFile, onRequestExitAction }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { logout, userAddress } = useAuth();
@@ -81,6 +84,10 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({ children, isUploadi
     }
   };
 
+  const openWalletModal = () => {
+    setUserMenuOpen(false);
+    setWalletModalOpen(true);
+  };
 
   return (
     <BackgroundLayout
@@ -157,6 +164,13 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({ children, isUploadi
                 {userMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-lg bg-slate-700/95 backdrop-blur-sm py-2 shadow-xl ring-1 ring-slate-600/50 focus:outline-none">
                     <button
+                      onClick={openWalletModal}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-slate-300 hover:bg-slate-600/50 hover:text-white transition-colors"
+                    >
+                      <WalletIcon className="h-4 w-4" />
+                      <span>Il mio wallet</span>
+                    </button>
+                    <button
                       onClick={() => {if (isUploadingFile) onRequestExitAction?.("profile"); else handleProfileEdit()}}
                       className="flex items-center space-x-2 w-full px-4 py-2 text-sm text-slate-300 hover:bg-slate-600/50 hover:text-white transition-colors"
                     >
@@ -184,6 +198,8 @@ const ResponsiveLayout: React.FC<ResponsiveLayoutProps> = ({ children, isUploadi
           {children}
         </div>
       </main>
+
+      <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
     </BackgroundLayout >
   );
 };
