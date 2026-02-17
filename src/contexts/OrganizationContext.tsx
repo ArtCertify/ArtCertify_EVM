@@ -3,6 +3,15 @@ import type { ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { nftService } from '../services/nftService';
 import { IPFSUrlService } from '../services/ipfsUrlService';
+import { isOrgNftName, orgDisplayName } from '../utils/orgNftName';
+
+function toDisplayImageUrl(image: string | undefined): string {
+  if (!image?.trim()) return '';
+  const trimmed = image.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  const cid = trimmed.replace(/^ipfs:\/\//, '').trim();
+  return cid ? IPFSUrlService.getGatewayUrl(cid) : '';
+}
 
 export interface OrganizationData {
   name: string;
@@ -58,7 +67,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         return;
       }
 
-      // In Base il nome "ORG: ..." è solo nel JSON su IPFS, non in params. Leggiamo il JSON per ogni NFT e cerchiamo quello con name che inizia per "ORG: ".
+      // In Base il nome "ORG: ..." è solo nel JSON su IPFS. Cerchiamo l'NFT il cui metadata.name inizia con il prefisso org.
       const results = await Promise.all(
         ownedNFTs.map(async (cert) => {
           const uri = cert.params?.reserve;
@@ -76,7 +85,7 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
         })
       );
 
-      const orgEntry = results.find((r) => r.json?.name?.startsWith?.('ORG: '));
+      const orgEntry = results.find((r) => isOrgNftName(r.json?.name));
       if (!orgEntry?.json || !orgEntry.cert.params?.reserve) {
         setOrganizationData(null);
         setLoading(false);
@@ -89,8 +98,8 @@ export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({ chil
       const org = cert.organization || {};
       const tech = cert.technical_specs || {};
       const form = jsonData.properties?.form_data || {};
-      const orgName = jsonData.name?.replace('ORG: ', '') || org.name || 'Organizzazione';
-      const orgImage = jsonData.image || '';
+      const orgName = orgDisplayName(jsonData.name) || org.name || 'Organizzazione';
+      const orgImage = toDisplayImageUrl(jsonData.image);
 
       setOrganizationData({
         name: orgName,

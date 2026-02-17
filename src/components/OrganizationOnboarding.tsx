@@ -7,6 +7,7 @@ import { WalletSignatureModal } from './modals/WalletSignatureModal';
 import { useOrganization } from '../contexts/OrganizationContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useWalletSignature } from '../hooks/useWalletSignature';
+import { toOrgNftName } from '../utils/orgNftName';
 
 interface OrganizationOnboardingProps {
   onBack?: () => void;
@@ -149,9 +150,9 @@ const OrganizationOnboarding: React.FC<OrganizationOnboardingProps> = ({ onBack,
     setSubmitError(null);
     
     try {
-      // Create NFT name with ORG: prefix
-      const nftName = `ORG: ${formData.name}`;
-      
+      // Nome NFT organizzazione: prefisso "ORG: " applicato in automatico (non inserito dall'utente)
+      const nftName = toOrgNftName(formData.name);
+
       // Generate unit name (max 8 chars): "ORG" + first 4 of name
       const nameShort = formData.name.substring(0, 4).toUpperCase();
       const unitName = `ORG${nameShort}`.substring(0, 8);

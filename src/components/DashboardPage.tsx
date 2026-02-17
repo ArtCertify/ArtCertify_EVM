@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useProjectsCache } from '../hooks/useProjectsCache';
 import { WalletSignatureModal } from './modals/WalletSignatureModal';
 import OrganizationOnboarding from './OrganizationOnboarding';
+import { isOrgNftName } from '../utils/orgNftName';
 import type { AssetInfo } from '../types/asset';
 
 // Project Card Component
@@ -381,8 +382,8 @@ export const DashboardPage: React.FC = () => {
   const emptyState = getEmptyStateMessage();
   
   // Check if user has an organization NFT
-  const hasOrganizationNFT = state.certificates.some(cert => 
-    cert.params?.name?.startsWith('ORG: ')
+  const hasOrganizationNFT = state.certificates.some(cert =>
+    isOrgNftName(cert.params?.name)
   );
   
   

@@ -5,6 +5,7 @@ import { useBaseCertificationFlow } from '../../hooks/useBaseCertificationFlow';
 import { Input, Textarea, Button, Alert } from '../ui';
 import { CertificationModal } from './CertificationModal';
 import { IPFSUrlService } from '../../services/ipfsUrlService';
+import { toOrgNftName, orgDisplayName } from '../../utils/orgNftName';
 
 interface ModifyOrganizationModalProps {
   isOpen: boolean;
@@ -50,9 +51,9 @@ const ModifyOrganizationModal: React.FC<ModifyOrganizationModalProps> = ({
     return ipfsUrl;
   };
 
-  // Form state - inizializza con i dati esistenti
+  // Form state - inizializza con i dati esistenti (nome senza prefisso ORG:)
   const [formData, setFormData] = useState({
-    name: organizationData?.name?.replace('ORG: ', '') || '',
+    name: orgDisplayName(organizationData?.name) || '',
     type: organizationData?.type || '',
     vatNumber: organizationData?.vatNumber || '',
     phone: organizationData?.phone || '',
@@ -182,10 +183,11 @@ const ModifyOrganizationModal: React.FC<ModifyOrganizationModalProps> = ({
         filesToUpload.push(formData.imageFile);
       }
 
-      // Use current JSON as base and update only changed fields
+      // Use current JSON as base and update only changed fields (prefisso ORG: automatico)
+      const orgNftName = toOrgNftName(formData.name);
       const updatedJson = {
         ...currentOrgJson,
-        name: `ORG: ${formData.name}`,
+        name: orgNftName,
         description: formData.description,
         image: formData.imageFile ? `ipfs://[NEW_HASH]` : currentOrgJson.image, // Will be updated by IPFS service
         properties: {
@@ -213,12 +215,12 @@ const ModifyOrganizationModal: React.FC<ModifyOrganizationModalProps> = ({
         }
       };
 
-      // Prepare form data for the flow
+      // Prepare form data for the flow (nome NFT con prefisso ORG: automatico)
       const formDataForFlow = {
         ...formData,
         projectName: 'Organizzazione',
-        assetName: `ORG: ${formData.name}`,
-        unitName: `ORG${formData.name.substring(0, 4).toUpperCase()}`,
+        assetName: orgNftName,
+        unitName: `ORG${(formData.name || '').substring(0, 4).toUpperCase()}`.substring(0, 8),
         type: 'organizzazione',
         customType: formData.type,
         timestamp: new Date().toISOString(),
@@ -230,7 +232,7 @@ const ModifyOrganizationModal: React.FC<ModifyOrganizationModalProps> = ({
         fileType: formData.imageFile?.type || currentOrgJson.properties?.form_data?.fileType || 'image/png',
         // Se non c'è un nuovo file, mantieni i dati originali
         originalImage: formData.originalImage,
-        fullAssetName: `ORG: ${formData.name}`,
+        fullAssetName: orgNftName,
         website: formData.website,
         address: formData.address
       };
@@ -239,7 +241,7 @@ const ModifyOrganizationModal: React.FC<ModifyOrganizationModalProps> = ({
       const newCertificationData = {
         asset_type: 'organization',
         unique_id: `ORG_${formData.name}`,
-        title: `ORG: ${formData.name}`,
+        title: orgNftName,
         author: 'Organization',
         creation_date: organizationData?.rawData?.properties?.form_data?.timestamp || new Date().toISOString(),
         organization: {
@@ -277,8 +279,8 @@ const ModifyOrganizationModal: React.FC<ModifyOrganizationModalProps> = ({
         formData: formDataForFlow,
         certificationData: newCertificationData,
         files: filesToUpload,
-        assetName: `ORG: ${formData.name}`,
-        unitName: `ORG${formData.name.substring(0, 4).toUpperCase()}`,
+        assetName: orgNftName,
+        unitName: `ORG${(formData.name || '').substring(0, 4).toUpperCase()}`.substring(0, 8),
         isOrganization: true,
         customJson: updatedJson
       });

@@ -84,7 +84,7 @@ export const useBaseCertificationFlow = () => {
     let metadataCid = '';
 
     try {
-      // Step 1: Upload metadata to IPFS
+      // Step 1: Upload logo/primary image to IPFS if present (es. organizzazione)
       const IPFSService = (await import('../services/ipfsService')).default;
       const ipfs = new IPFSService();
       const cert = params.certificationData || {};
@@ -92,7 +92,15 @@ export const useBaseCertificationFlow = () => {
         (cert.technical_specs && (cert.technical_specs as Record<string, string>).description) ||
         params.description ||
         '';
-      const imageUrl = ''; // optional: upload first image file and set here
+      let imageUrl = '';
+      const firstFile = params.files?.[0];
+      if (firstFile && firstFile.type.startsWith('image/')) {
+        const fileRes = await ipfs.uploadFile(firstFile, {
+          name: `org_logo_${firstFile.name}`,
+          keyvalues: { type: 'organization_logo' },
+        });
+        imageUrl = `ipfs://${fileRes.IpfsHash}`;
+      }
       const metadata = {
         name: params.assetName,
         description,
